@@ -1,8 +1,9 @@
 ﻿@page "/Account/Manage/TwoFactorAuthentication"
-
+@attribute [Authorize(Roles = "Admin")]
 @using Microsoft.AspNetCore.Http.Features
 @using Microsoft.AspNetCore.Identity
 @using Yaghane360.Data
+@using Yaghane360.Data.Admin
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager

@@ -1,0 +1,80 @@
+﻿@page "/safes"
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@using Yaghane360.Components.Services
+@inject ZeytinTakipDBContext db
+@inject NavigationManager Navigation
+
+
+<h3>Kasalar Ekranı</h3>
+
+@if (hataMesaji != null)
+{
+    <p class="text-danger">@hataMesaji</p>
+}
+else if (kasalar == null)
+{
+    <p><em>Aktif işlemdeki ürün bulunamadı veya yükleniyor...</em></p>
+}
+else
+{
+    if (kasalar != null)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Kasa Adı</th>
+                    <th>Tutar</th>
+                    <th>İşlem Gir</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kasa in kasalar)
+                {
+                    <tr>
+                        <th>@kasa.KasaAdi</th>
+                        <th>@kasa.Miktar</th>
+                        <th>
+                            <MudIconButton Icon="@Icons.Material.Filled.PlaylistPlay"
+                                           Color="Color.Success"
+                                           Size="Size.Large"
+                                           @onclick="@(() => KasaIslemeGit(kasa.KasaID))" />
+                        </th>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p><em>Aktif Kasa yok</em></p>
+    }
+}
+
+@code {
+    private string hataMesaji;
+    private List<Data.Kullanici.Kasa> kasalar;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // List<Kasalar> kasalar = new();
+            //kasalar = new();
+            // urunCek = new();
+            kasalar = await db.Kasalar
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            hataMesaji = $"Veri yüklenirken bir hata oluştu: {ex.ToString()}";
+        }
+    }
+    private void KasaIslemeGit(int k)
+    {
+        StateHasChanged();
+        Navigation.NavigateTo($"/safes/Proces/{k}");
+	}
+}

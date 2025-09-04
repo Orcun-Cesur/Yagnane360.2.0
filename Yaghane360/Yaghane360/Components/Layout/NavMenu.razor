@@ -1,70 +1,164 @@
-﻿@implements IDisposable
+﻿
+@implements IDisposable
 
 @inject NavigationManager NavigationManager
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Yaghane360</a>
+<div class="top-row ps-3 navbar navbar-dark navbar-custom-gradient">
+    <div class="container-fluid d-flex justify-content-center">
+        <a class="navbar-brand" href="">
+            <img src="favicon.png" alt="Yaghane360 İkon" class="navbar-logo" />
+        </a>
     </div>
 </div>
+
+
+<style>
+    .navbar-custom-gradient {
+        background-image: linear-gradient(to right, #2E7D32, #1B5E20); /* Açık yeşilden koyu yeşile geçiş */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Hafif bir gölge ile derinlik katıyoruz */
+    }
+
+    .navbar {
+        min-height: 50px; /* navbar yüksekliğini büyüt */
+        padding: 0; /* ekstra boşlukları kaldır */
+    }
+
+
+    .navbar-logo {
+        height: 60px;
+        width: auto;
+    }
+
+    .navbar-brand span {
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+</style>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
 
         <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+            <NotAuthorized>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <MudIcon Icon="@Icons.Material.Filled.Home" Class="me-2"></MudIcon>
+                      <span aria-hidden="true"></span> Home
                     </NavLink>
                 </div>
-                <div class="nav-item px-3">
+
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="blog">
+                        <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Blog
+                    </NavLink>
+                </div>
+
+                 <div class="nav-item px-4">
+                     <NavLink class="nav-link" href="weather">
+                        <MudIcon Icon="@Icons.Material.Filled.Air" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Weather
+                     </NavLink>
+                 </div>
+
+                <div class="nav-item px-4">
+                   <NavLink class="nav-link" href="Account/Login">
+                        <MudIcon Icon="@Icons.Material.Filled.Login" Class="me-2"></MudIcon>
+                     <span aria-hidden="true"></span> Login
+                   </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="Account/Manage">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> @context.User.Identity?.Name
+                    </NavLink>
+                </div>
+                <div class="nav-item px-4">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
+                            <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2"></MudIcon>
+                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                        </button>
+                    </form>
+                </div>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="Account/Register">
+                        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Kayıt Oluştur
+                    </NavLink>
+                </div>
+			</Authorized>
+		</AuthorizeView>
+        <AuthorizeView Roles="FabrikaSahibi">
+            <Authorized>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="yonetici/search">
+                        <MudIcon Icon="@Icons.Material.Filled.Search" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Müşteriler
+                    </NavLink>
+                </div>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="safes">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Kasalar
+                    </NavLink>
+                </div>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="islemler">
+                        <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> İşlemler Listesi
+                    </NavLink>
+                </div>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="YagCikis">
+                        <MudIcon Icon="@Icons.Material.Filled.Water" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Yağ Çıkış İşlemleri
+                    </NavLink>
+                </div>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="makinaIslem">
+                        <MudIcon Icon="@Icons.Material.Filled.Build" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Makina Süreçleri
+                    </NavLink>
+                </div>
+                <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="urunKabul">
+                        <MudIcon Icon="@Icons.Material.Filled.AddBox" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Ürün Girişi
+                    </NavLink>
+                </div>
+@*                 <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="views">
+                        <MudIcon Icon="@Icons.Material.Filled.SmartDisplay" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Bilgi Ekranları
+                    </NavLink>
+                </div> *@
+@*                 <div class="nav-item px-4">
+                    <NavLink class="nav-link" href="MachineViews">
+                        <MudIcon Icon="@Icons.Material.Filled.DisplaySettings" Class="me-2"></MudIcon>
+                        <span aria-hidden="true"></span> Makina Ekranları
+                    </NavLink>
+                </div> *@
+                <div class="nav-item px-4">
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <button type="submit" class="nav-link">
+                            <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2"></MudIcon>
                             <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
                         </button>
                     </form>
                 </div>
             </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
         </AuthorizeView>
     </nav>
 </div>

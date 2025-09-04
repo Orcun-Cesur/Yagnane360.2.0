@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 using Yaghane360.Client.Pages;
 using Yaghane360.Components;
 using Yaghane360.Components.Account;
-using Yaghane360.Data;
-using MudBlazor.Services;
+using Yaghane360.Components.Services;
+using Yaghane360.Data.Admin;
+using Yaghane360.Data.Kullanici;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,8 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+builder.Services.AddScoped<MusteriServices>();
+builder.Services.AddScoped<UrunServices>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -31,6 +35,9 @@ builder.Services.AddAuthentication(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
 	?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<ZeytinTakipDBContext>(options =>
+	options.UseSqlServer(builder.Configuration.GetConnectionString("ZeytinDB")));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 	options.UseSqlServer(connectionString));
@@ -46,39 +53,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
-
-// 🔹 Rol ve ilk admin kullanıcıyı oluşturma metodu
-async Task CreateRoles(IServiceProvider serviceProvider)
-{
-	var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-	var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-	// Admin rolü yoksa oluştur
-	if (!await roleManager.RoleExistsAsync("Admin"))
-	{
-		await roleManager.CreateAsync(new IdentityRole("Admin"));
-	}
-
-	// İlk admin kullanıcısı
-	string adminEmail = "admin@yaghane360.com";
-	string adminPassword = "Admin123!"; // Güçlü bir şifre seç
-
-	var adminUser = await userManager.FindByEmailAsync(adminEmail);
-	if (adminUser == null)
-	{
-		adminUser = new ApplicationUser
-		{
-			UserName = adminEmail,
-			Email = adminEmail,
-			EmailConfirmed = true
-		};
-		var result = await userManager.CreateAsync(adminUser, adminPassword);
-		if (result.Succeeded)
-		{
-			await userManager.AddToRoleAsync(adminUser, "Admin");
-		}
-	}
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -104,11 +78,5 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
-
-// 🔹 Uygulama başlarken Admin rolünü ve ilk admini oluştur
-using (var scope = app.Services.CreateScope())
-{
-	await CreateRoles(scope.ServiceProvider);
-}
 
 app.Run();

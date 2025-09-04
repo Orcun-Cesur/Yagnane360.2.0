@@ -1,0 +1,143 @@
+﻿@page "/malaksorler"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using Microsoft.EntityFrameworkCore
+@using  Yaghane360.Data.Kullanici
+@using  Yaghane360.Components.Services
+@inject Yaghane360.Data.Kullanici.ZeytinTakipDBContext db
+@inject UrunServices urunServices
+@inherits LayoutComponentBase
+
+<h3>Malaksorler</h3>
+
+@if (hataMesajiSiradaki != null)
+{
+    <p class="text-danger">@hataMesajiSiradaki</p>
+}
+else if (kiriciMalaksor == null)
+{
+    <p><em>Sıradaki ürün bulunamadı veya yükleniyor...</em></p>
+}
+else
+{
+    if (kiriciMalaksor.Urun == null)
+    {
+        <p><em>Yeni ürün bekleniyor...</em></p>
+    }
+    else
+    {
+        <MudPaper Class="d-flex red-text flex-column align-items-center p-6" Elevation="4" Style="width:400px; margin:auto;">
+            <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Primary">
+                @kiriciMalaksor.Urun.Musteri.Isim @kiriciMalaksor.Urun.Musteri.Soyisim
+            </MudText>
+            
+            <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Primary">
+                @kiriciMalaksor.Urun.Musteri.Bolge
+            </MudText>
+            
+            <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Dark">
+                @kiriciMalaksor.Urun.ZeytinKg KG
+            </MudText>
+        </MudPaper>
+    }
+}
+<p><em>Gelen parti için uygun Malaksörü seçin</em></p>
+@if (makineler == null)
+{
+    <p>Yükleniyor...</p>
+}
+else
+{
+    <MudGrid>
+        @foreach (var makine in makineler)
+        {
+            bool makineBos = makine.Urun == null || makine.Urun.Musteri == null;
+
+            <MudItem xs="4">
+                <MudPaper Class="pa-4 cursor-pointer"
+                          Style=@(makineBos ? "background-color:#d4edda;" : "")>
+
+                    <MudText Typo="Typo.h6">Malaksör No: @(makine.MachineID - 1)</MudText>
+
+                    @if (makineBos)
+                    {
+                        <MudText>Makine boş</MudText>
+                        <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mt-4" OnClick="() => urunServices.MalaksorSecildi(makine.MachineID)">
+                            Malaksöre Al
+                        </MudButton>
+                    }
+                    else
+                    {
+                        var musteri = makine.Urun;
+                        <MudText>@musteri.Musteri.Isim @musteri.Musteri.Soyisim</MudText>
+                        <MudText>Bölge: @musteri.Musteri.Bolge</MudText>
+                        <MudText>Kilo: @musteri.ZeytinKg</MudText>
+                        <Sayac />
+                        <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mt-4" OnClick="() => urunServices.DekantorAta(makine.MachineID)">
+                           Dekantöre Yönlendir
+                        </MudButton>
+                    }
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+
+@code {
+    private string hataMesajiSiradaki;
+    private Machine kiriciMalaksor;
+    private List<Machine> makineler = null;
+    protected override async Task OnInitializedAsync()
+    {
+        kiriciMalaksor = await db.Makineler.Where(m => m.MachineID >= 1)
+                 .Include(m => m.Urun)
+                 .ThenInclude(u => u.Musteri)
+                 .FirstOrDefaultAsync(m => m.MachineID == 1);
+
+        makineler = await urunServices.GetMakinelerWithDetailsAsync();
+
+    }
+    public async Task MalaksorSecildi(int machineID)
+    {
+        Console.WriteLine($"Makine {machineID} seçildi!");
+        // Eğer sadece boşlar için işlem yapılacaksa:
+        var secilenMalaksor = makineler.FirstOrDefault(m => m.MachineID == machineID);
+        if (kiriciMalaksor.Urun != null)
+        {
+            secilenMalaksor.IslemNo = kiriciMalaksor.Urun.IslemNo;
+            kiriciMalaksor.IslemNo = 0;
+            kiriciMalaksor.Urun = null;
+            db.Makineler.Update(kiriciMalaksor);
+            await db.SaveChangesAsync();
+        }
+       
+        kiriciMalaksor = new();
+        // Console.WriteLine($"Makine {machineID} seçildi!");
+        // // Eğer sadece boşlar için işlem yapılacaksa:
+        // var secilenMalaksor = makineler.FirstOrDefault(m => m.MachineID == machineID);
+        // if (kirici.Urun != null)
+        // {
+        //     // Veritabanından doğrudan güncellenecek makineyi çek
+        //     var kiriciMakine = await db.Makineler.FirstOrDefaultAsync(m => m.MachineID == 1);
+
+        //     if (kiriciMakine != null)
+        //     {
+        //         secilenMalaksor.IslemNo = kiriciMakine.IslemNo;
+        //         // Değerleri temizle
+        //         kiriciMakine.IslemNo = null;
+        //         kiriciMakine.Urun = null;
+
+        //         // Kaydet
+        //         await db.SaveChangesAsync();
+        //     }
+        // }
+    }
+    // protected override void OnInitialized()
+    // {
+    //     var timer = new System.Timers.Timer(1000);
+    //     timer.Elapsed += (_, _) => InvokeAsync(StateHasChanged);
+    //     timer.Start();
+    // }
+
+}

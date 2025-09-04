@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Yaghane360.Data;
+using Yaghane360.Data.Admin;
 
 namespace Yaghane360.Components.Account
 {

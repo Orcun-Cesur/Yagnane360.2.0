@@ -58,3 +58,50 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.navbar-custom-gradient {
+    background-image: linear-gradient(to right, #2E7D32, #1B5E20);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.navbar-logo {
+    height: 40px;
+    width: auto;
+}
+
+.navbar-brand 
+    color: inherit;
+    text-decoration: none;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+    .navbar-brand:hover {
+        color: inherit;
+    }
+
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white; /* arka tamamen beyaz olsun */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* hep üstte */
+}
+
+.loading-overlay img {
+    width: 120px;  /* favicon küçükse büyüt */
+    height: auto;
+    animation: spin 1s linear infinite; /* animasyon ekliyoruz */
+}
+
+/* basit dönme animasyonu */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Yaghane360.Data
+namespace Yaghane360.Data.Kullanici
 {
 	public class Urun
 	{
@@ -13,7 +13,7 @@ namespace Yaghane360.Data
 		public int? MusteriID { get; set; }
 		public Musteri Musteri { get; set; }
 
-		public decimal? ZeytinKg { get; set; }
+		public decimal ZeytinKg { get; set; }
 		public DateTime? TarihGirdi { get; set; }
 
 		[ForeignKey("Box")]

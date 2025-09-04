@@ -1,0 +1,273 @@
+﻿@page "/yonetici/search"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using Yaghane360.Data.Kullanici
+@using Yaghane360.Components.Services
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@inject Yaghane360.Data.Kullanici.ZeytinTakipDBContext db
+@inject MusteriServices musteriServices
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+
+<h3>👥 Müşteri Listesi</h3>
+
+    
+<MudGrid Style="max-width: 800px;" Class="align-items-center">
+    <MudItem xs="5" sm="7">
+        <MudTextField Label="İsim Veya Soyisim Aratabilirsiniz..."
+                      @bind-Value="AramaMetni"
+                      Variant="Variant.Text"
+                      Clearable />
+    </MudItem>
+    <MudItem xs="4" sm="3">
+        <MudTextField Label="Bölge Aratabilirsiniz..."
+                      @bind-Value="AramaMetniBolge"
+                      Variant="Variant.Text"
+                      Clearable />
+    </MudItem>
+    <MudItem xs="3" sm="2" Class="d-flex justify-end">
+        <MudIconButton Icon="@Icons.Material.Outlined.Add"
+                       Color="Color.Primary"
+                       Size="Size.Large"
+                       @onclick="addYonlendir" />
+    </MudItem>
+</MudGrid>
+
+@if (!string.IsNullOrEmpty(hataMesaji))
+{
+    <p style="color:red">HATA: @hataMesaji</p>
+}
+else if (filtreliMusteriler == null)
+{
+    <p>Yükleniyor...</p>
+}
+else if (filtreliMusteriler.Count == 0)
+{
+    <p>Sonuç bulunamadı.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Musteri ID</th>
+                <th>İsim</th>
+                <th>Soyisim</th>
+                <th>Telefon</th>
+                <th>Adres</th>
+                <th>Bolge</th>
+                    
+                <th>
+                    Borç
+                    <MudIconButton Icon="@BorcIcon()"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="SiralaBorc" />
+                </th>
+                <th>Stok Yag
+                    <MudIconButton Icon="@YagIcon()"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="SiralaYag" />
+                </th>
+                <th>
+                    Stok Zeytin
+                    <MudIconButton Icon="@ZeytinIcon()"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="SiralaZeytin" />
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in filtreliMusteriler)
+            {
+                <tr>
+                    <td>@m.MusteriID</td>
+                    <td>@m.Isim</td>
+                    <td>@m.Soyisim</td>
+                    <td>@m.Telefon</td>
+                    <td>@m.Adres</td>
+                    <td>@m.Bolge</td>
+                    <td>@m.Borc</td>
+                    <td>@m.StokYag</td>
+                    <td>@m.StokZeytin</td>
+                    <td>
+                        <MudIconButton Icon="@Icons.Material.Filled.List"
+                                       Color="Color.Primary"
+                                       Size="Size.Medium"
+                                       @onclick="@(() => listYonlendir(m.MusteriID))" />
+                    </td>
+                    <td>
+                        <MudIconButton Icon="@Icons.Material.Filled.Autorenew"
+                                       Color="Color.Primary"
+                                       Size="Size.Medium"
+                                       @onclick="@(() => updateYonlendir(m.MusteriID))" />
+                    </td>
+                    <td>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Medium"
+                                       @onclick="@(() => SilMusteri(m.MusteriID))" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Musteri> tumMusteriler;
+    private List<Musteri> filtreliMusteriler;
+    private Musteri silMusteri;
+    string hataMesaji;
+    private string aramaMetni = "";
+    private string aramaMetniBolge = "";
+    private bool artanMiBorc = true;
+    private bool artanMiYag = true;
+    private bool artanMiZeytin = true;
+    private void addYonlendir()
+    {
+        Navigation.NavigateTo("/yonetici/add");
+    }
+    private void updateYonlendir(int musteriId)
+    {
+        Navigation.NavigateTo($"/update/{musteriId}");
+    }
+    private void listYonlendir(int musteriId)
+    {
+        Navigation.NavigateTo($"/musteriList/{musteriId}");
+	}
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+            tumMusteriler = await musteriServices.GetAllMusteri();
+            Filtrele();
+        }
+        catch (Exception ex)
+        {
+            hataMesaji = ex.Message;
+        }
+    }
+    private async Task SilMusteri(int musteriId)
+    {
+        silMusteri = await musteriServices.GetMusteriByIdAsync(musteriId);
+        if (silMusteri.StokZeytin < 1)
+        {
+            if (silMusteri.StokYag < 1 && silMusteri.Borc == 0)
+            {
+                var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Bu müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.");
+                if (confirmed)
+                {
+                    await musteriServices.MusteriDeleteAsync(musteriId);
+
+                    // Silme işlemi sonrası listenin güncel halini tekrar yükle
+                    filtreliMusteriler = await musteriServices.GetAllMusteri();
+                }
+            }
+            else
+            {
+                await JSRuntime.InvokeAsync<bool>("confirm", "Bu müşteri silinemez Aktif Yağ Stoğu veya Aktif Borç Durumu");
+            }
+        }
+        else
+        {
+            await JSRuntime.InvokeAsync<bool>("confirm", "Bu müşteri silinemez aktif işlemi var");
+        }
+
+        
+    }
+
+    private string ZeytinIcon()
+    {
+        return artanMiZeytin ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown;
+    }
+    private string BorcIcon()
+    {
+        return artanMiBorc ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown;
+    }
+    private string YagIcon()
+    {
+        return artanMiYag ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown;
+    }
+
+    private void SiralaBorc()
+    {
+        if (artanMiBorc)
+            filtreliMusteriler = filtreliMusteriler.OrderBy(m => m.Borc).ToList();
+        else
+            filtreliMusteriler = filtreliMusteriler.OrderByDescending(m => m.Borc).ToList();
+
+        artanMiBorc = !artanMiBorc;
+    }
+    private void SiralaYag()
+    {
+        if (artanMiYag)
+            filtreliMusteriler = filtreliMusteriler.OrderBy(m => m.StokYag).ToList();
+        else
+            filtreliMusteriler = filtreliMusteriler.OrderByDescending(m => m.StokYag).ToList();
+
+        artanMiYag = !artanMiYag;
+    }
+    private void SiralaZeytin()
+    {
+        if (artanMiZeytin)
+            filtreliMusteriler = filtreliMusteriler.OrderBy(m => m.StokZeytin).ToList();
+        else
+            filtreliMusteriler = filtreliMusteriler.OrderByDescending(m => m.StokZeytin).ToList();
+
+        artanMiZeytin = !artanMiZeytin;
+    }
+    private void Filtrele()
+    {
+        if (string.IsNullOrWhiteSpace(aramaMetni))
+        {
+            filtreliMusteriler = tumMusteriler;
+        }
+        else
+        {
+            var metin = aramaMetni.ToLower();
+            filtreliMusteriler = tumMusteriler.Where(m =>
+                (!string.IsNullOrEmpty(m.Isim) && m.Isim.ToLower().Contains(metin)) ||
+                (!string.IsNullOrEmpty(m.Soyisim) && m.Soyisim.ToLower().Contains(metin))
+            ).ToList();
+        }
+    }
+    private void FiltreleBolge()
+    {
+        if (string.IsNullOrWhiteSpace(aramaMetniBolge))
+        {
+            filtreliMusteriler = tumMusteriler;
+        }
+        else
+        {
+            var metin = aramaMetniBolge.ToLower();
+            filtreliMusteriler = tumMusteriler.Where(m =>
+                (!string.IsNullOrEmpty(m.Bolge) && m.Bolge.ToLower().Contains(metin))
+            ).ToList();
+        }
+    }
+    // Her aramada filtreleme yap
+    private string AramaMetni
+    {
+        get => aramaMetni;
+        set
+        {
+            aramaMetni = value;
+            Filtrele();
+        }
+    }
+    private string AramaMetniBolge
+    {
+        get => aramaMetniBolge;
+        set
+        {
+            aramaMetniBolge = value;
+            FiltreleBolge();
+        }
+    }
+}

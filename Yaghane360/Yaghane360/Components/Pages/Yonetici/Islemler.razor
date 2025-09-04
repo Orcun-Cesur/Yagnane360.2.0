@@ -1,0 +1,179 @@
+﻿@page "/islemler"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using  Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@using Yaghane360.Components.Services
+@inject Yaghane360.Data.Kullanici.ZeytinTakipDBContext db
+@inject MusteriServices musteriServices
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<h3> İşlemler Sayfası</h3>
+<MudStack Direction="Row" Spacing="2" AlignItems="AlignItems.Center">
+@* <MudItem xs="5" sm="7"> *@
+
+     <MudTextField Label="İsim Veya Soyisim Aratabilirsiniz..."
+                   @bind-Value="AramaMetni"
+                   Variant="Variant.Text"
+                   Clearable />
+
+     <MudButton OnClick="OnToggleButtonClick"
+            Variant="Variant.Filled"
+            Color="@(_showingActiveOperations ? Color.Info : Color.Warning)"
+                EndIcon="@(_showingActiveOperations ? Icons.Material.Filled.List : Icons.Material.Filled.FilterList)">
+     @_toggleButtonText
+     </MudButton>
+
+@* </MudItem> *@
+</MudStack>
+
+@if (!string.IsNullOrEmpty(hataMesaji))
+{
+    <p style="color:red">HATA: @hataMesaji</p>
+}
+else if (islemler == null)
+{
+    <p>Yükleniyor...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>İslem No</th>
+                <th>Box numarası</th>
+                <th>Musteri ID</th>
+                <th>İsim</th>
+                <th>Soyisim</th>
+                <th>Gelen Zeytin</th>
+                <th>Geliş Tarihi</th>
+                <th>Stok Yağ</th>
+                <th>Yağ Çıkış Tarihi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in gosterilecekVeriler)
+            {
+                <tr>
+                    <td>@u.IslemNo</td>
+                    <td>@u.BoxID</td>
+                    <td>@u.MusteriID</td>
+                    <td>@u.MusteriIsim</td>
+                    <td>@u.MusteriSoyisim</td>
+                    <td>@u.ZeytinKg</td>
+                    <td>@u.TarihGirdi</td>
+                    <td>@u.YagKg</td>
+                    <td>@u.TarihCikti</td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Urun> islemler;
+    List<Musteri> musteriler;
+    string hataMesaji;
+    private string aramaMetni = "";
+    private List<IslemlerViewModel> gosterilecekVeriler;
+    private List<IslemlerViewModel> alinanVeriler;
+    private bool _showingActiveOperations = false; // Başlangıçta aktif işlemleri göster
+    private string _toggleButtonText = "Aktif İşlemleri Göster"; // Butonun başlangıç metni
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            gosterilecekVeriler = new List<IslemlerViewModel>();
+            musteriler = await musteriServices.GetAllMusteri();
+            islemler = await musteriServices.GetAllUrun();
+            alinanVeriler = (from i in islemler
+                             join m in musteriler on i.MusteriID equals m.MusteriID
+                             select new IslemlerViewModel
+                             {
+                                 IslemNo = i.IslemNo,
+                                 BoxID = i.BoxID,
+                                 MusteriID = i.MusteriID,
+                                 MusteriIsim = m.Isim,
+                                 MusteriSoyisim = m.Soyisim,
+                                 ZeytinKg = i.ZeytinKg,
+                                 TarihGirdi = i.TarihGirdi,
+                                 YagKg = i.YagKg,
+                                 TarihCikti = i.TarihCikti
+                             }).ToList();
+            gosterilecekVeriler = alinanVeriler;
+            //islemler = await musteriServices.GetAllUrun();
+        }
+        catch (Exception ex)
+        {
+            hataMesaji = ex.Message;
+        }
+    }
+    // Butona tıklandığında aktif/tüm işlemler arasında geçiş yapar
+    private async Task OnToggleButtonClick()
+    {
+        _showingActiveOperations = !_showingActiveOperations; // Durumu tersine çevir
+
+        if (_showingActiveOperations)
+        {
+            AktifIslemler();
+            _toggleButtonText = "Tüm İşlemleri Göster";
+        }
+        else
+        {
+            gosterilecekVeriler = alinanVeriler;
+            _toggleButtonText = "Aktif İşlemleri Göster";
+        }
+        StateHasChanged(); // UI'ı güncelle
+    }
+    private void Filtrele()
+    {
+        if (string.IsNullOrWhiteSpace(aramaMetni))
+        {
+            gosterilecekVeriler = alinanVeriler;
+        }
+        else
+        {
+            var metin = aramaMetni.ToLower();
+            gosterilecekVeriler = alinanVeriler.Where(m =>
+                    (!string.IsNullOrEmpty(m.MusteriIsim) && m.MusteriIsim.ToLower().Contains(metin)) ||
+                    (!string.IsNullOrEmpty(m.MusteriSoyisim) && m.MusteriSoyisim.ToLower().Contains(metin))
+                ).ToList();
+        }
+    }
+    private string AramaMetni
+    {
+        get => aramaMetni;
+        set
+        {
+            aramaMetni = value;
+            Filtrele();
+        }
+    }
+    public class IslemlerViewModel
+    {
+        // Müşteri
+        public int? MusteriID { get; set; }
+        public string? MusteriIsim { get; set; }
+        public string? MusteriSoyisim { get; set; }
+
+        // Box
+        public int? BoxID { get; set; }
+        //public decimal? Miktar { get; set; }
+
+        // İşlem
+        public int IslemNo { get; set; }
+        public decimal ZeytinKg { get; set; }
+        public decimal? YagKg { get; set; }
+        public DateTime? TarihGirdi { get; set; }
+        public DateTime? TarihCikti { get; set; }
+    }
+    private void AktifIslemler()
+    {
+        gosterilecekVeriler = gosterilecekVeriler
+        .Where(i => i.TarihCikti == null)
+        .ToList();
+    }
+}

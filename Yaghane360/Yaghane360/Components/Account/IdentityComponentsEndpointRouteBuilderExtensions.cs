@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Yaghane360.Components.Account.Pages;
 using Yaghane360.Components.Account.Pages.Manage;
-using Yaghane360.Data;
+using Yaghane360.Data.Admin;
 
 namespace Microsoft.AspNetCore.Routing
 {

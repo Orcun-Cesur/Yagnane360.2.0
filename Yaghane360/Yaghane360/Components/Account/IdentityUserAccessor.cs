@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using Yaghane360.Data;
+using Yaghane360.Data.Admin;
 
 namespace Yaghane360.Components.Account
 {

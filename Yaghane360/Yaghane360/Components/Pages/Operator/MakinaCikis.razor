@@ -1,0 +1,120 @@
+﻿@page "/makinaCikis"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@using  Yaghane360.Components.Services
+@inject Yaghane360.Data.Kullanici.ZeytinTakipDBContext db
+
+
+<h3>Seperator Çıktı</h3>
+
+@if (hataMesaji != null)
+{
+    <p class="text-danger">@hataMesaji</p>
+}
+else if (seperator == null)
+{
+    <p><em>Aktif işlemdeki ürün bulunamadı veya yükleniyor...</em></p>
+}
+else
+{
+    @if (seperator.IslemNo != 0 && seperator.Urun != null)
+    {
+        <MudPaper Class="d-flex red-text flex-column align-items-center p-6" Elevation="4" Style="width:400px; margin:auto;">
+            <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Primary">
+                @seperator.Urun.Musteri.Isim @seperator.Urun.Musteri.Soyisim
+            </MudText>
+
+            <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Primary">
+                @seperator.Urun.Musteri.Bolge
+            </MudText>
+
+            <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Dark">
+                @seperator.Urun.ZeytinKg KG
+            </MudText>
+
+            <MudNumericField TValue="decimal?" class="form-control" Min="0" Variant="Variant.Outlined" @bind-Value="seperator.Urun.YagKg" />
+
+            <MudNumericField T="int" @bind-Value="TNK18" Min="0" HelperText="18LT Teneke Adedi" />
+            <MudNumericField T="int" @bind-Value="TNK10" Min="0" HelperText="10LT Teneke" />
+            <MudNumericField T="int" @bind-Value="TNK5" Min="0" HelperText="5LT Teneke" />
+            <MudButton OnClick="Kaydet">Kaydet</MudButton>
+
+        </MudPaper>
+    }
+    else
+    {
+        <p><em>Aktif ürün yok</em></p>
+    }
+}
+
+
+@code {
+    private string hataMesaji;
+    private Machine seperator;
+    private bool IsTNK18Selected { get; set; } = false;
+    private bool IsTNK10Selected { get; set; } = true;
+    private bool IsTNK5Selected { get; set; } = true;
+
+    private int TNK18 = 0;
+    private int TNK10 = 0;
+    private int TNK5 = 0;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            //seperator = new();
+            seperator = await db.Makineler.Include(m => m.Urun)
+                .ThenInclude(u => u.Musteri)
+                .FirstOrDefaultAsync(m => m.MachineID == 8);
+        }
+        catch (Exception ex)
+        {
+            hataMesaji = $"Veri yüklenirken bir hata oluştu: {ex.ToString()}";
+        }
+
+    }
+    private async Task Kaydet()
+    {
+        if (seperator.Urun.YagKg is null) return;
+
+        seperator.Urun.TarihCikti = DateTime.Now;
+        seperator.Urun.Musteri.YagHacim += seperator.Urun.YagKg.Value;
+        seperator.Urun.Musteri.StokYag += seperator.Urun.YagKg.Value;
+        seperator.Urun.Musteri.Borc += TNK18 * 100;
+        seperator.Urun.Musteri.Borc += TNK10 * 80;
+        seperator.Urun.Musteri.Borc += TNK5 * 50;
+        seperator.IslemNo = 0;
+        seperator.Urun = null;
+        //seperator.Urun.Musteri.StokZeytin -= seperator.Urun.ZeytinKg;
+
+        db.Makineler.Update(seperator);
+        await db.SaveChangesAsync();
+
+
+
+        Console.WriteLine("Kaydedildi.");
+        // olmazsa null a çevir eşittirden sonra burda önce çalışıyordu
+        seperator = null;
+    }
+
+    private void OnYagKgChanged(decimal value)
+    {
+        seperator.Urun.YagKg = value;
+        seperator.Urun.TarihCikti = DateTime.Now;
+        seperator.Urun.Musteri.StokYag += value;
+        seperator.Urun.Musteri.YagHacim += value;
+        db.Update(seperator.Urun);
+        db.Update(seperator.Urun.Musteri);
+        db.SaveChanges();
+        Console.WriteLine($"Yağ Kg güncellendi: {value}");
+        seperator = new(); // İşlem sonrası makineyi sıfırla
+    }
+    private void Degis()
+    {
+        IsTNK5Selected = !IsTNK5Selected;
+    }
+}

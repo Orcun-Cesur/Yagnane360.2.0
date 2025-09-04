@@ -1,23 +1,34 @@
-﻿@inherits LayoutComponentBase
+﻿@using Yaghane360.Components.Services;
+@inherits LayoutComponentBase
+@* @inject LoadingService LoadingService*@
 
 <MudThemeProvider />
 <MudDialogProvider />
+<MudPopoverProvider />
 <MudSnackbarProvider />
 
+
 <MudLayout>
-    <MudAppBar Elevation="1">
+    <MudAppBar Elevation="1" Class="navbar-custom-gradient">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Yeni Projem</MudText>
+
+        <a class="navbar-brand d-flex justify-content-center align-items-center w-100" href="">
+            <span>Yaghane360</span>
+        </a>
+
+
         <MudSpacer />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
+
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2">
         <NavMenu />
     </MudDrawer>
+
     <MudMainContent>
-        <div class="pa-4">
+         <div class="pa-4">
             @Body
-        </div>
+        </div> 
     </MudMainContent>
 </MudLayout>
 

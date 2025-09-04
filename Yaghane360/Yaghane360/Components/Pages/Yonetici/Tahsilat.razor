@@ -1,0 +1,192 @@
+﻿@page "/safes/tahsilat/{tah:int}"
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ZeytinTakipDBContext db
+
+<h3>Tahsilat Ekranı</h3>
+@if (musteriler != null)
+{
+    <MudPaper Class="p-4" Style="max-width: 500px; margin: auto;">
+
+        <MudAutocomplete T="Musteri"
+                         Label="Müşteri Seç"
+                         @bind-Value="selectedMusteri"
+                         SearchFunc="SearchMusteri"
+                         ToStringFunc="@(m => m == null ? "" : $"{m.Isim} {m.Soyisim} ({m.Bolge})")"
+                         Clearable="true"
+                         Required
+                         Class="mt-2"
+                         Adornment="Adornment.End"
+                         AdornmentIcon="@Icons.Material.Filled.Check"
+                         AdornmentColor="Color.Success" />
+@*         <MudTextField T="string"
+                      Label="Müşteri Ara"
+                      @bind-Value="searchText"
+                      Variant="Variant.Text"
+                      Clearable="true"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search" /> *@
+
+        @if (!string.IsNullOrEmpty(searchText))
+        {
+            <MudList T="Musteri" Class="mt-2">
+                @foreach (var musteri in filteredMusteriler)
+                {
+                    <MudListItem OnClick="@(() => SelectMusteri(musteri))">
+                        @musteri.Isim @musteri.Soyisim (@musteri.Bolge)
+                    </MudListItem>
+                }
+            </MudList>
+        }
+        else if (selectedMusteri != null)
+        {
+@*             <MudTextField T="string"
+                          Label="Seçilen Müşteri"
+                          Value="@($"{selectedMusteri.Isim} {selectedMusteri.Soyisim} ({selectedMusteri.Bolge})")"
+                          ReadOnly="true"
+                          Class="mt-2"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Check"
+                          AdornmentColor="Color.Success" /> *@
+        }
+
+        <MudTextField @bind-Value="tahsilatMiktari" Label="Tahsilat Miktarı TL" Variant="Variant.Text" Class="mt-4" Required />
+
+        <MudButton OnClick="TahsilatYap" Color="Color.Primary" Variant="Variant.Filled" Class="mt-4">Tahsil Et</MudButton>
+
+        @if (!string.IsNullOrEmpty(mesaj))
+        {
+            <MudText Class="mt-3" Color="Color.Info">@mesaj</MudText>
+        }
+    </MudPaper>
+}
+else
+{
+    <p><em>Tahsilat işlemi yükleniyor</em></p>
+}
+
+
+
+@code {
+    private List<Musteri> musteriler;
+    private List<Data.Kullanici.Kasa> kasalar;
+    private Musteri selectedMusteri;
+    private decimal tahsilatMiktari;
+    private string mesaj;
+    private string searchText = "";
+    private List<Musteri> filteredMusteriler = new();
+    [Parameter]
+    public int tah { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Veritabanından müşteri ve kasa verilerini yükle
+            musteriler = await db.Musteriler.AsNoTracking().ToListAsync();
+            selectedMusteri = musteriler.First();
+            if (musteriler == null || !musteriler.Any())
+            {
+                mesaj = "Müşteri listesi boş veya yüklenemedi.";
+            }
+            
+            kasalar = await db.Kasalar.ToListAsync();
+            if (kasalar == null || !kasalar.Any())
+            {
+                mesaj = (mesaj ?? "") + " Kasa listesi boş veya yüklenemedi.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mesaj = $"Veri yüklenirken hata oluştu: {ex.Message}";
+            Console.WriteLine($"Hata detayı: {ex}");
+        }
+    }
+    private void OnSearchTextChanged(string value)
+    {
+        searchText = value;
+        FilterMusteriler();
+    }
+
+    private void FilterMusteriler()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            filteredMusteriler.Clear();
+            return;
+        }
+
+        filteredMusteriler = musteriler
+            .Where(m =>
+                m.Isim.ToLower().Contains(searchText.ToLower()) ||
+                m.Soyisim.ToLower().Contains(searchText.ToLower()) ||
+                (m.Bolge != null && m.Bolge.ToLower().Contains(searchText.ToLower())))
+            .ToList();
+    }
+
+    private void SelectMusteri(Musteri musteri)
+    {
+        selectedMusteri = musteri;
+        searchText = ""; // Seçimden sonra arama kutusunu temizle
+        filteredMusteriler.Clear(); // Liste görünümünü gizle
+    }
+    private async Task TahsilatYap()
+    {
+        if (selectedMusteri == null || tah == 0 || tahsilatMiktari <= 0)
+        {
+            mesaj = "Geçerli bir müşteri ve miktar seçin.";
+            return;
+        }
+
+        var musteri = await db.Musteriler.FindAsync(selectedMusteri.MusteriID);
+        var kasa = await db.Kasalar.FindAsync(tah);
+
+        if (musteri == null || kasa == null)
+        {
+            mesaj = "Müşteri veya kasa bulunamadı.";
+            return;
+        }
+
+        kasa.Miktar += tahsilatMiktari;
+        musteri.Borc -= tahsilatMiktari;
+        db.Attach(musteri);
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var currentUserName = user.Identity?.Name ?? "Misafir";
+
+        var islem = new Data.Kullanici.KasaIslemleri
+        {
+            KasaID = kasa.KasaID,
+            KasaAdi = kasa.KasaAdi,
+            Musteri = musteri,
+            Kasa = kasa,
+            Miktar = tahsilatMiktari,
+            Tarih = DateTime.Now,
+            IslemiYapanKisi = currentUserName,
+        };
+        db.KasaIslemleri.Add(islem);
+
+        await db.SaveChangesAsync();
+
+        mesaj = $"Tahsilat başarıyla işlendi: {tahsilatMiktari} TL";
+
+        selectedMusteri = null;
+        tahsilatMiktari = 0;
+    }
+    private async Task<IEnumerable<Musteri>> SearchMusteri(string value, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(value))
+            return musteriler;
+
+        return await db.Musteriler
+            .Where(m =>
+                m.Isim.ToLower().Contains(value.ToLower()) ||
+                m.Soyisim.ToLower().Contains(value.ToLower()) ||
+                (m.Bolge != null && m.Bolge.ToLower().Contains(value.ToLower())))
+            .ToListAsync(cancellationToken);
+    }
+}

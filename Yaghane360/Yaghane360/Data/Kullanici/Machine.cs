@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Yaghane360.Data
+namespace Yaghane360.Data.Kullanici
 {
 	public class Machine
 	{

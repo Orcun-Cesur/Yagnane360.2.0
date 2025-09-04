@@ -1,0 +1,72 @@
+﻿@page "/musteriList/{MusteriId:int}"
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+
+@using Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@using  Yaghane360.Components.Services
+@inject Yaghane360.Data.Kullanici.ZeytinTakipDBContext db
+@inject MusteriServices musteriServices
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<h3> İşlemler Sayfası</h3>
+
+@if (!string.IsNullOrEmpty(hataMesaji))
+{
+    <p style="color:red">HATA: @hataMesaji</p>
+}
+else if (gosterilecekVeriler == null)
+{
+    <p>Yükleniyor...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>İslem No</th>
+                <th>Box numarası</th>
+                <th>Musteri ID</th>
+                <th>İsim</th>
+                <th>Soyisim</th>
+                <th>Gelen Zeytin</th>
+                <th>Geliş Tarihi</th>
+                <th>Stok Yağ</th>
+                <th>Yağ Çıkış Tarihi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in gosterilecekVeriler)
+            {
+                <tr>
+                    <td>@u.IslemNo</td>
+                    <td>@u.BoxID</td>
+                    <td>@u.MusteriID</td>
+                    <td>@u.Musteri.Isim</td>
+                    <td>@u.Musteri.Soyisim</td>
+                    <td>@u.ZeytinKg</td>
+                    <td>@u.TarihGirdi</td>
+                    <td>@u.YagKg</td>
+                    <td>@u.TarihCikti</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    [Parameter]
+    public int MusteriId { get; set; }
+    private List<Urun> gosterilecekVeriler;
+    private string hataMesaji;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        gosterilecekVeriler = await db.Urunler
+                         .Include(u => u.Musteri)
+                         .Where(u => u.MusteriID == MusteriId)
+                         .ToListAsync();
+    }
+}

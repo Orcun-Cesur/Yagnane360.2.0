@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Yaghane360.Data;
+using Yaghane360.Data.Admin;
 
 namespace Yaghane360.Components.Account
 {

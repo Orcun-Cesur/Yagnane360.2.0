@@ -1,0 +1,106 @@
+﻿@page "/yonetici/add"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using Yaghane360.Data.Kullanici
+@using Yaghane360.Components.Services
+@inject MusteriServices musteriServices
+
+@* Servis yerine doğrudan DbContext'i enjekte ediyoruz *@
+@inject ZeytinTakipDBContext dbContext
+@inject NavigationManager NavigationManager
+
+<h3>Yeni Müşteri Ekle</h3>
+
+<EditForm Model="@yeniMusteri" OnValidSubmit="MusteriEkle">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">İsim</label>
+            <InputText class="form-control" @bind-Value="yeniMusteri.Isim" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Soyisim</label>
+            <InputText class="form-control" @bind-Value="yeniMusteri.Soyisim" />
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Adres</label>
+            <InputText class="form-control" @bind-Value="yeniMusteri.Adres" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Bölge</label>
+            <InputSelect class="form-control" @bind-Value="yeniMusteri.Bolge">
+                <option value="">Bölge Seçiniz</option>
+                <option value="Mirzaoba">Mirzaoba</option>
+                <option value="Manisa">Manisa</option>
+                <option value="Akhisar">Akhisar</option>
+                <option value="Keçiören">Keçiören</option>
+                <!-- Daha fazla ekleyebilirsin -->
+            </InputSelect>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Telefon</label>
+            <InputText class="form-control" @bind-Value="yeniMusteri.Telefon" />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Borç</label>
+            <InputNumber class="form-control" @bind-Value="yeniMusteri.Borc" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Stok Yağ (Litre)</label>
+            <InputNumber class="form-control" @bind-Value="yeniMusteri.StokYag" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Stok Zeytin (Kg)</label>
+            <InputNumber class="form-control" @bind-Value="yeniMusteri.StokZeytin" />
+        </div>
+
+        <div class="col-12 d-flex justify-end">
+            <button type="submit" class="btn btn-primary">Müşteriyi Ekle</button>
+        </div>
+    </div>
+</EditForm>
+
+
+@if (!string.IsNullOrEmpty(bilgiMesaji))
+{
+    <p class="text-success mt-3">@bilgiMesaji</p>
+}
+
+@code {
+
+    public Musteri yeniMusteri=new ();
+    private string bilgiMesaji;
+    private string isim;
+
+    // protected override void OnInitialized()
+    // private Musteri yeniMusteri = new();
+
+    private async Task MusteriEkle()
+    {
+        try
+        {
+            if(yeniMusteri.Isim != null && yeniMusteri.Soyisim != null && yeniMusteri.Bolge != null && yeniMusteri.Telefon != null)
+            {
+                await musteriServices.MusteriAdd(yeniMusteri);
+                bilgiMesaji = "✅ Müşteri başarıyla eklendi.";
+                yeniMusteri = new Musteri();
+                StateHasChanged();
+            }
+            else
+            {
+                bilgiMesaji = "Lütfen gerekli alanları doldurunuz.";
+            }
+        }
+        catch (Exception ex)
+        {
+            bilgiMesaji = $"❌ Hata oluştu: {ex.Message}";
+            Console.WriteLine(ex.InnerException.ToString());
+        }
+    }
+}

@@ -1,0 +1,81 @@
+﻿@page "/forklift"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@using  Yaghane360.Components.Services
+@inject Yaghane360.Data.Kullanici.ZeytinTakipDBContext db
+@inject UrunServices urunServices
+
+<h3>Forklift Operatörü Ekranı</h3>
+
+@if (hataMesaji != null)
+{
+    <p class="text-danger">@hataMesaji</p>
+}
+else if (gosterilecekUrun == null)
+{
+    <p><em>Aktif işlemdeki ürün bulunamadı veya yükleniyor...</em></p>
+}
+else
+{
+    if (gosterilecekUrun.Musteri != null)
+    {
+        <MudPaper Class="d-flex red-text flex-column align-items-center p-6" Elevation="4" Style="width:400px; margin:auto;">
+            <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Primary">
+                @gosterilecekUrun.Musteri.Isim @gosterilecekUrun.Musteri.Soyisim
+            </MudText>
+
+            <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Primary">
+                @gosterilecekUrun.Musteri.Bolge
+            </MudText>
+
+            <MudText Typo="Typo.h2" Align="Align.Center" Class="mt-4 font-weight-bold">
+                Box: @gosterilecekUrun.BoxID
+            </MudText>
+
+            @*
+        <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Dark">
+            @gosterilecekUrun.ZeytinKg KG
+        </MudText>*@
+
+            <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mt-4" OnClick="Onay">
+                Bırakıldı
+            </MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <p><em>Sıradaki ürün yükleniyor...</em></p>
+    }
+}
+
+@code {
+    private string hataMesaji;
+    private Urun gosterilecekUrun; // Tek bir Urun nesnesi tutacağız
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            gosterilecekUrun = await db.Urunler
+                                    .Include(u => u.Musteri)
+                                    .ThenInclude(u => u.Boxlar)
+                                    .FirstOrDefaultAsync(u => u.IslemDurum == false);
+        }
+        catch (Exception ex)
+        {
+            hataMesaji = $"Veri yüklenirken bir hata oluştu: {ex.ToString()}";
+        }
+    }
+    private async Task Onay()
+    {
+        string sonuc = await urunServices.KiriciKontrolAsync(gosterilecekUrun);
+        Console.WriteLine(sonuc); // veya ekranda göster
+        gosterilecekUrun.Box.Miktar = 0;
+        db.Boxlar.Update(gosterilecekUrun.Box);
+        await db.SaveChangesAsync();
+        gosterilecekUrun = new Urun(); // Yeni bir Urun nesnesi oluştur
+    }
+
+}

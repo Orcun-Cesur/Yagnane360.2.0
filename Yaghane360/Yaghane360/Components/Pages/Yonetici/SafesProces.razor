@@ -1,0 +1,129 @@
+﻿@page "/safes/Proces/{kas:int}"
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Yaghane360.Data.Kullanici
+@using Yaghane360.Components.Services
+@inject ZeytinTakipDBContext db
+@inject NavigationManager Navigation
+
+
+
+<h3>Kasa işlemleri</h3>
+<MudIconButton Icon="@Icons.Material.Filled.TrendingUp"
+               Color="Color.Success"
+               Size="Size.Large"
+               @onclick="@(() => TahsilatYonlendir(kas))" />
+
+
+    <MudIconButton Icon="@Icons.Material.Filled.TrendingDown"
+                   Color="Color.Error"
+                   Size="Size.Large"
+                   @onclick="@(() => GiderGit(kas))" />
+@if (hataMesaji != null)
+{
+    <p class="text-danger">@hataMesaji</p>
+}
+else if (kasaIslem == null)
+{
+    <p><em>Aktif işlemdeki ürün bulunamadı veya yükleniyor...</em></p>
+}
+else
+{
+    if (kasaIslem != null)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tip</th>
+                    <th>Acıklama</th>
+                    <th>Tutar</th>
+                    <th>Tarih</th>
+                    <th>Detay</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kasa in kasaIslem)
+                {
+                    <tr>
+                        <td>@kasa.Tip</td>
+                        <td>@kasa.Aciklama</td>
+                        <td>@kasa.Tutar</td>
+                        <td>@kasa.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+@*                         <td>
+                            <MudTooltip Text="@kasa.Aciklama" Placement="Placement.Top">
+                                <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                            </MudTooltip>
+                        </td>  *@
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+    }
+    else
+    {
+        <p><em>Aktif Kasa işlemi yok</em></p>
+    }
+}
+
+@code
+{
+    private string hataMesaji;
+    private List<KasaIslemDTO> kasaIslem;
+
+    [Parameter]
+    public int kas { get; set; }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var islemler = await db.KasaIslemleri
+            .Include(x => x.Musteri)
+            .Select(x => new KasaIslemDTO
+            {
+                //Müşteri isim Soyisim ekle
+                Tarih = x.Tarih,
+                Tutar = x.Miktar,
+                Aciklama = x.Musteri.Isim + " " + (x.Musteri.Soyisim),
+                IslemiYapan = x.IslemiYapanKisi,
+                Tip = "Tahsilat"
+            })
+            .ToListAsync();
+
+        var giderler = await db.KasaGider
+            .Select(x => new KasaIslemDTO
+            {
+                Tarih = x.Tarih,
+                Tutar = x.Miktar,
+                Aciklama = x.GiderTuru /*  + " - " + (x.Aciklama ?? "") */,
+                IslemiYapan = x.IslemiYapanKisi,
+                Tip = "Gider"
+            })
+            .ToListAsync();
+
+        kasaIslem = islemler
+            .Concat(giderler)
+            .OrderByDescending(x => x.Tarih)
+            .ToList();
+    }
+
+    private void TahsilatYonlendir(int kas)
+    {
+        Navigation.NavigateTo($"/safes/tahsilat/{kas}", true);
+    }
+    private void GiderGit(int k)
+    {
+        StateHasChanged();
+        Navigation.NavigateTo($"/safes/gider/{k}", true);
+    }
+    public class KasaIslemDTO
+    {
+        public DateTime Tarih { get; set; }
+        public decimal Tutar { get; set; }
+        public string Aciklama { get; set; }
+        public string IslemiYapan { get; set; }
+        public string Tip { get; set; } // "İşlem" veya "Gider"
+    }
+}

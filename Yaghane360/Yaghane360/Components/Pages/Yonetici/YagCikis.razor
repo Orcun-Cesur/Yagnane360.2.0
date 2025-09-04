@@ -1,0 +1,154 @@
+﻿@page "/YagCikis"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@using Yaghane360.Data.Kullanici
+@inject ZeytinTakipDBContext dbContext
+
+<h3>Yağ Çıkışı</h3>
+
+
+<div class="row">
+    <div class="mb-3 col-6">
+        <label>Müşteri İsim Soyisim Ara:</label>
+        <InputText class="form-control" @bind-Value="arananMusteriIsım" />
+        @*Mudbuton ekle*@
+        <button class="btn btn-secondary mt-1" @onclick="Filtrele">Müşteri Getir</button>
+    </div>
+    <div class="mb-3 col-6">
+        <label>Müşteri ID ile Ara:</label>
+        <InputNumber class="form-control" @bind-Value="arananMusteriID" />
+        <button class="btn btn-secondary mt-1" @onclick="MusteriAra">Müşteri Getir</button>
+    </div>
+</div>
+
+@if (seciliMusteri != null)
+{
+    <div class="d-flex flex-wrap gap-2">
+        <input type="number" class="form-control mb-2" @bind="gelenMiktar" placeholder="Yağ Miktarı (kg)" />
+        @foreach (var s in seciliMusteri)
+        {
+            <div class="card p-3" style="min-width: 250px;">
+                <p>👤 <strong>@s.Isim @s.Soyisim</strong></p>
+                <p><strong>@s.MusteriID &emsp; &emsp; &emsp; &emsp; @s.Bolge</strong></p>
+                <p><strong>@s.StokYag KG</strong></p>
+                <button class="btn btn-success" @onclick="() => YagCik(s, gelenMiktar)">Yag Çık</button>
+            </div>
+        }
+    </div>
+}
+else if (musteriBulunamadi)
+{
+    <p class="text-danger">Müşteri bulunamadı.</p>
+}
+
+
+@code {
+    private List<Box> bosBoxlar;
+    private string bilgiMesaji;
+    private int? arananMusteriID;
+    private string arananMusteriIsım;
+    private decimal gelenMiktar;
+    private List<Musteri> seciliMusteri;
+    private bool musteriBulunamadi = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    private async Task MusteriAra()
+    {
+        seciliMusteri = new List<Musteri>();
+        if (arananMusteriID.HasValue)
+        {
+            var musteri = dbContext.Musteriler
+                .FirstOrDefault(m => m.MusteriID == arananMusteriID.Value);
+
+            if (musteri != null)
+            {
+                seciliMusteri.Add(musteri);
+                musteriBulunamadi = false;
+            }
+            else
+            {
+                musteriBulunamadi = true;
+            }
+        }
+        //seciliMusteri.Clear();
+    }
+    private void Filtrele()
+    {
+        seciliMusteri = new List<Musteri>();
+        if (!string.IsNullOrWhiteSpace(arananMusteriIsım))
+        {
+            var metin = arananMusteriIsım.ToLower();
+
+            seciliMusteri = dbContext.Musteriler
+                .Where(m =>
+                    (!string.IsNullOrEmpty(m.Isim) && m.Isim.ToLower().Contains(metin)) ||
+                    (!string.IsNullOrEmpty(m.Soyisim) && m.Soyisim.ToLower().Contains(metin))
+                )
+                .ToList();
+            musteriBulunamadi = seciliMusteri.Count == 0;
+        }
+    }
+    private async Task YagCik(Musteri musteri, decimal yag)
+    {
+        // The customer object is already passed to the method, so no need to query the database again.
+        // Use the 'musteri' parameter directly.
+        if (musteri != null)
+        {
+            if (musteri.StokYag >= yag) // Check if there's enough stock to remove
+            {
+                // Update the customer's oil quantity
+                musteri.StokYag -= yag;
+                dbContext.Musteriler.Update(musteri);
+                await dbContext.SaveChangesAsync();
+                bilgiMesaji = $"{musteri.Isim} {musteri.Soyisim} isimli müşteriden {yag} kg yağ çıkışı yapıldı.";
+            }
+            else
+            {
+                bilgiMesaji = $"{musteri.Isim} {musteri.Soyisim} isimli müşterinin yeterli stoğu yok. Mevcut stok: {musteri.StokYag} kg.";
+            }
+        }
+        else
+        {
+            bilgiMesaji = "Müşteri bulunamadı.";
+        }
+
+        // Reset the input fields and refresh the UI
+        gelenMiktar = 0;
+        StateHasChanged();
+    }
+    /*
+    private async Task YagCik(Musteri musteri, decimal yag)
+    {
+        var musteriyag = dbContext.Musteriler.FirstOrDefault(musteri => musteri.MusteriID == musteri.MusteriID);
+        if (musteriyag != null)
+        {
+            if(musteri.StokYag > 0)
+            {
+                // Müşterinin yağ miktarını güncelle
+                musteriyag.StokYag -= yag;
+                dbContext.Musteriler.Update(musteri);
+                await dbContext.SaveChangesAsync();
+                bilgiMesaji = $"{musteri.Isim} {musteri.Soyisim} isimli müşteriden {yag} kg yağ çıkışı yapıldı.";
+                musteri = new();
+                yag = new();
+                gelenMiktar = 0;
+            }
+            else if(musteri.StokYag <= 0)
+            {
+                bilgiMesaji = $"{musteri.Isim} {musteri.Soyisim} isimli müşterinin {musteri.StokYag} kg Yagı bulunmaktadır {yag} kg cıkışı yapamazsınız. ";
+                musteri = new();
+                yag = new();
+                gelenMiktar = 0;
+            }
+            StateHasChanged();
+        }
+        else
+        {
+            bilgiMesaji = "Müşteri bulunamadı.";
+        }
+    }*/
+}

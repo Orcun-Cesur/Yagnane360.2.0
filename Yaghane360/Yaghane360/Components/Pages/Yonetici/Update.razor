@@ -1,0 +1,86 @@
+﻿@page "/update/{MusteriId:int}"
+@attribute [Authorize(Roles = "Admin, FabrikaSahibi")]
+@rendermode InteractiveServer
+@using Yaghane360.Data.Kullanici
+@using Yaghane360.Components.Services
+@inject MusteriServices musteriServices
+@inject NavigationManager Navigation
+
+<h3>Müşteri Bilgilerini Güncelle</h3>
+
+@if (!string.IsNullOrEmpty(hataMesaji))
+{
+	<p style="color:red">HATA: @hataMesaji</p>
+}
+else if (musteri == null)
+{
+	<p>Yükleniyor...</p>
+}
+else
+{
+	<EditForm Model="@musteri" OnValidSubmit="GuncelleMusteri">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+		<div class="row g-3">
+
+			<div class="col-md-6">
+				<label class="form-label">İsim:</label>
+				<InputText class="form-control" @bind-Value="musteri.Isim" />
+			</div>
+			<div class="col-md-6">
+				<label class="form-label">Soyisim:</label>
+				<InputText class="form-control" @bind-Value="musteri.Soyisim" />
+			</div>
+
+			<div class="col-md-12">
+				<label class="form-label">Adres:</label>
+				<InputText class="form-control" @bind-Value="musteri.Adres" />
+			</div>
+
+			<div class="col-md-6">
+				<label class="form-label">Telefon:</label>
+				<InputText class="form-control" @bind-Value="musteri.Telefon" />
+			</div>
+
+			<div class="col-md-6">
+				<label class="form-label">Bölge:</label>
+				<InputText class="form-control" @bind-Value="musteri.Bolge" />
+			</div>
+			<button type="submit" class="btn btn-success">Güncelle</button>
+		</div>
+	</EditForm>
+}
+@code
+{
+	[Parameter]
+	public int MusteriId { get; set; }
+	private Musteri musteri;
+	private string hataMesaji;
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			musteri = await musteriServices.GetMusteriByIdAsync(MusteriId);
+			if (musteri == null)
+			{
+				hataMesaji = "Müşteri bulunamadı.";
+			}
+		}
+		catch (Exception ex)
+		{
+			hataMesaji = $"Hata: {ex.Message}";
+		}
+	}
+	private async Task GuncelleMusteri()
+	{
+		try
+		{
+			await musteriServices.UpdateMusteriAsync(musteri);
+			Navigation.NavigateTo("/yonetici/search");
+		}
+		catch (Exception ex)
+		{
+			hataMesaji = $"Güncelleme hatası: {ex.Message}";
+		}
+	}
+}

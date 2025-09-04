@@ -1,19 +1,207 @@
-﻿@page "/counter"
-@rendermode InteractiveAuto
+﻿@page "/blog"
 
-<PageTitle>Counter</PageTitle>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huzurlu Zeytin Blog Sayfası</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc; /* Açık gri arka plan */
+            color: #4a5568; /* Koyu gri yazı rengi */
+            position: relative;
+            min-height: 100vh;
+        }
+            /* Arka plan logosu için stil */
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: img src="favicon.png" /* Şirketinizin logosunun URL'sini buraya yapıştırın */
+                background-repeat: no-repeat;
+                background-position: center center;
+                background-size: 50%; /* Logonun büyüklüğü */
+                opacity: 0.7; /* Logonun silik görünmesi */
+                z-index: -1; /* İçeriğin arkasında kalması */
+                pointer-events: none; /* Etkileşim engeli */
+            }
 
-<h1>Counter</h1>
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.9); /* İçerik kutusunun hafif şeffaf beyaz arka planı */
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
 
-<p role="status">Current count: @currentCount</p>
+        .blog-post {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0; /* Her yazı arasına ince çizgi */
+        }
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+            .blog-post:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
 
-@code {
-    private int currentCount = 0;
+        .post-image-placeholder {
+            width: 100%;
+            height: 300px;
+            background-color: #cbd5e0; /* Gri yer tutucu rengi */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a5568;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            overflow: hidden; /* Resim sığmazsa taşmasını engeller */
+        }
 
-    private void IncrementCount()
-    {
-        currentCount++;
-    }
-}
+            .post-image-placeholder img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover; /* Resmi kutuya sığdırır */
+            }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container my-8">
+        <!-- Başlık Bölümü -->
+        <header class="text-center mb-8">
+            <h1 class="text-5xl font-extrabold text-gray-800 mb-4">Zeytin Diyarından Huzur Esintileri</h1>
+            <p class="text-xl text-gray-600">Zeytin ağacının gölgesinde, geçmişten günümüze uzanan hikayeler...</p>
+        </header>
+
+        <!-- Blog Yazıları Bölümü -->
+        <main>
+            <!-- İlk Blog Yazısı: Zeytin Ağacının Bereketi ve Tarihi -->
+            <article class="blog-post" id="post-1">
+                <div class="post-image-placeholder">
+                    <!-- Gerçek bir resim kullanmak için aşağıdaki img etiketini yorumdan çıkarıp src özelliğini güncelleyebilirsiniz -->
+                    <img src="istockphoto-1318479337-1024x1024.jpg" alt="Antik bir zeytin ağacı">
+
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Zeytin Ağacı: Bereketin ve Tarihin Sembolü</h2>
+                <p class="text-lg leading-relaxed mb-4 post-content">
+                    Binlerce yıldır Akdeniz topraklarının vazgeçilmezi olan zeytin ağacı, sadece bir bitki değil, aynı zamanda bir yaşam felsefesidir. Kökleri derinlere inen bu asil ağaç, kurak topraklarda bile yeşerir, uzun ömrüyle nesillere tanıklık eder. Zeytin, barışın, sağlığın ve bereketin sembolü olmuştur. Antik çağlardan beri, zeytin ve zeytinyağı hem beslenme hem de şifa kaynağı olarak kullanılmış, mitolojilere ve efsanelere konu olmuştur. Zeytin ağacının her bir yaprağında, geçmişin bilgeliği ve geleceğin umudu saklıdır.
+                </p>
+                <p class="text-md text-gray-500 italic mb-4">22 Ağustos 2025</p>
+            </article>
+
+            <!-- İkinci Blog Yazısı: Zeytinyağının Sağlık Faydaları -->
+            <article class="blog-post" id="post-2">
+                <div class="post-image-placeholder">
+                    <!-- Gerçek bir resim kullanmak için aşağıdaki img etiketini yorumdan çıkarıp src özelliğini güncelleyebilirsiniz -->
+                    <img src="istockphoto-1206682746-1024x1024.jpg" alt="Taze zeytinyağı ve zeytinler">
+
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Akdeniz'in Altın Sıvısı: Zeytinyağının Sağlık Faydaları</h2>
+                <p class="text-lg leading-relaxed mb-4 post-content">
+                    Zeytinyağı, yüzyıllardır Akdeniz diyetinin kalbinde yer alan, mucizevi bir besin kaynağıdır. Özellikle sızma zeytinyağı, içerdiği yüksek orandaki tekli doymamış yağ asitleri ve antioksidanlar sayesinde kalp sağlığını destekler, iltihaplanmayı azaltır ve kronik hastalıklara karşı koruyucu etki gösterir. Kolesterol seviyelerini dengelemeye yardımcı olurken, cilt sağlığından sindirim sistemine kadar pek çok alanda fayda sunar. Her damlası sağlık ve lezzet dolu olan bu altın sıvı, mutfaklarımızın vazgeçilmezidir.
+                </p>
+                <p class="text-md text-gray-500 italic mb-4">15 Ağustos 2025</p>
+            </article>
+
+            <!-- Üçüncü Blog Yazısı: Zeytin Hasadı ve Gelenekler -->
+            <article class="blog-post" id="post-3">
+                <div class="post-image-placeholder">
+                    <!-- Gerçek bir resim kullanmak için aşağıdaki img etiketini yorumdan çıkarıp src özelliğini güncelleyebilirsiniz -->
+                    <img src="istockphoto-624541154-1024x1024.jpg" alt="Zeytin hasadı yapan insanlar">
+
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Bereketli Hasat: Zeytin Toplama ve Gelenekleri</h2>
+                <p class="text-lg leading-relaxed mb-4 post-content">
+                    Her yıl sonbahar aylarında, zeytin ağaçları olgunlaşmış meyveleriyle hasat zamanını müjdeler. Zeytin hasadı, Akdeniz kültüründe sadece bir tarım faaliyeti değil, aynı zamanda bir şenlik ve dayanışma geleneğidir. Aileler ve komşular bir araya gelerek ağaçların etrafına serilen örtülere zeytinleri toplar. Bu meşakkatli ama keyifli süreç, zeytinlerin sofralarımıza ve mutfaklarımıza ulaşmasının ilk adımıdır. Hasat sonrasında taze sıkılan zeytinyağının kokusu, tüm yöreye yayılan eşsiz bir ziyafetin başlangıcıdır.
+                </p>
+                <p class="text-md text-gray-500 italic mb-4">08 Ağustos 2025</p>
+            </article>
+        </main>
+
+        <!-- Alt Bilgi Bölümü -->
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>&copy; 2025 Yaghane360 Tüm hakları saklıdır.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const summaryButtons = document.querySelectorAll('.generate-summary-btn');
+
+            summaryButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const postArticle = button.closest('.blog-post');
+                    const postContent = postArticle.querySelector('.post-content').textContent;
+                    const summaryOutput = postArticle.querySelector('.summary-output');
+
+                    summaryOutput.classList.remove('hidden');
+                    summaryOutput.innerHTML = '<div class="flex items-center"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Özet oluşturuluyor...</div>';
+
+                    try {
+                        let chatHistory = [];
+                        chatHistory.push({ role: "user", parts: [{ text: `Aşağıdaki blog yazısını 2-3 cümleyle özetle:\n\n${postContent}` }] });
+                        const payload = { contents: chatHistory };
+                        const apiKey = ""; // Canvas ortamında otomatik olarak sağlanır
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                        let response;
+                        let result;
+                        let retries = 0;
+                        const MAX_RETRIES = 5;
+                        const BASE_DELAY = 1000; // 1 saniye
+
+                        while (retries < MAX_RETRIES) {
+                            try {
+                                response = await fetch(apiUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                });
+
+                                if (response.ok) {
+                                    result = await response.json();
+                                    break; // Başarılı, döngüden çık
+                                } else if (response.status === 429) { // Too Many Requests
+                                    retries++;
+                                    const delay = BASE_DELAY * Math.pow(2, retries - 1);
+                                    await new Promise(res => setTimeout(res, delay));
+                                } else {
+                                    throw new Error(`API hatası: ${response.status} ${response.statusText}`);
+                                }
+                            } catch (e) {
+                                console.error("Fetch hatası:", e);
+                                retries++;
+                                const delay = BASE_DELAY * Math.pow(2, retries - 1);
+                                await new Promise(res => setTimeout(res, delay));
+                            }
+                        }
+
+                        if (!result || !result.candidates || result.candidates.length === 0 || !result.candidates[0].content || !result.candidates[0].content.parts || result.candidates[0].content.parts.length === 0) {
+                            summaryOutput.innerHTML = '<p class="text-red-600">Özet oluşturulamadı. Lütfen tekrar deneyin.</p>';
+                            return;
+                        }
+
+                        const text = result.candidates[0].content.parts[0].text;
+                        summaryOutput.innerHTML = `<p class="font-semibold">Özet:</p><p>${text}</p>`;
+
+                    } catch (error) {
+                        console.error('Özet oluşturma hatası:', error);
+                        summaryOutput.innerHTML = '<p class="text-red-600">Bir hata oluştu. Lütfen konsola bakın.</p>';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

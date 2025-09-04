@@ -1,5 +1,5 @@
 ﻿@page "/Account/InvalidUser"
-
+@attribute [Authorize(Roles = "Admin")]
 <PageTitle>Invalid user</PageTitle>
 
 <h3>Invalid user</h3>
